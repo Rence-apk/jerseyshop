@@ -1,0 +1,35 @@
+# Ignore operating system files
+.DS_Store
+Thumbs.db
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Ignore build and dist files
+/build/
+/dist/
+/node_modules/
+/dist/
+
+# Ignore logs and temp files
+*.log
+*.tmp
+*.temp
+
+# Ignore package manager files
+package-lock.json
+yarn.lock
+
+# Ignore editor backup files
+*~
+*.swp
+
+# Ignore .env files
+.env
+
+# Ignore .git files
+/.git/
