@@ -441,6 +441,62 @@ app.post('/api/logos/:id/complete', async (req, res) => {
     }
 });
 
+// Define the route to get total amount and price
+app.get('/api/total', async (req, res) => {
+    try {
+        // Calculate total price from Logo collection
+        const totalPrice = await database.collection('logos').aggregate([
+            { $group: { _id: null, totalPrice: { $sum: "$price" } } }
+        ]).toArray();
+
+        // Calculate total amount from Order collection
+        const totalAmount = await database.collection('orders').aggregate([
+            { $group: { _id: null, totalAmount: { $sum: "$totalAmount" } } }
+        ]).toArray();
+
+        res.json({
+            totalPrice: totalPrice[0]?.totalPrice || 0,
+            totalAmount: totalAmount[0]?.totalAmount || 0
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching data', error: error.message });
+    }
+});
+
+// Endpoint to fetch sales statistics
+app.get('/api/sales-stats', async (req, res) => {
+    try {
+        const totalSales = await database.collection('orders').aggregate([
+            { $group: { _id: null, totalAmount: { $sum: "$totalAmount" } } }
+        ]).toArray();
+
+        const weeklySales = await database.collection('orders').aggregate([
+            { $match: { createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } } },
+            { $group: { _id: null, totalAmount: { $sum: "$totalAmount" } } }
+        ]).toArray();
+
+        const monthlySales = await database.collection('orders').aggregate([
+            { $match: { createdAt: { $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1) } } },
+            { $group: { _id: null, totalAmount: { $sum: "$totalAmount" } } }
+        ]).toArray();
+
+        const yearlySales = await database.collection('orders').aggregate([
+            { $match: { createdAt: { $gte: new Date(new Date().getFullYear(), 0, 1) } } },
+            { $group: { _id: null, totalAmount: { $sum: "$totalAmount" } } }
+        ]).toArray();
+
+        res.json({
+            weeklySales: weeklySales[0]?.totalAmount || 0,
+            monthlySales: monthlySales[0]?.totalAmount || 0,
+            yearlySales: yearlySales[0]?.totalAmount || 0,
+            totalSales: totalSales[0]?.totalAmount || 0,
+            salesByMonth: [3000, 4200, 3500, 5200, 6000, 7200, 8000, 8500, 9000, 9500, 10000, 11000] // Example data, can be dynamically fetched
+        });
+    } catch (error) {
+        console.error('Error fetching sales statistics:', error.message);
+        res.status(500).json({ message: 'Internal server error', error: error.message });
+    }
+});
 
 // Start the server
 app.listen(port, async () => {
